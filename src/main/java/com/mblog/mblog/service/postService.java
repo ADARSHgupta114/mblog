@@ -4,6 +4,6 @@ import  com.mblog.mblog.payload.postDTO;
 public interface postService {
 
     postDTO createPost(postDTO postdto);
-
+    postDTO getPostById(long id);
 
 }
