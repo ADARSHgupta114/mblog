@@ -5,9 +5,14 @@ import com.mblog.mblog.exception.ResourceNotFoundException;
 import com.mblog.mblog.payload.postDTO;
 import com.mblog.mblog.repository.postRepository;
 import com.mblog.mblog.service.postService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.lang.module.ResolutionException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class postServiceImpl implements postService
@@ -20,17 +25,10 @@ public class postServiceImpl implements postService
 
     @Override
     public postDTO createPost(postDTO postdto) {
-        Post post = new Post();
-        post.setTitle(postdto.getTitle());
-        post.setDescription(postdto.getDescription());
-        post.setContent(postdto.getContent());
+
+        Post post = maptToEntity(postdto);
         Post savedPost = postrepo.save(post);
-
-        postDTO dto = new postDTO();
-        dto.setTitle(savedPost.getTitle());
-        dto.setDescription(savedPost.getDescription());
-        dto.setContent(savedPost.getContent());
-
+        postDTO dto = maptToDTO(savedPost);
         return dto;
     }
     public postDTO getPostById(long id){
@@ -43,4 +41,34 @@ public class postServiceImpl implements postService
        dto.setContent(post.getContent());
        return  dto;
     }
+
+    @Override
+    public List<postDTO> getAllPost(int pageno, int pagesize, String sortby, String sortbydir) {
+        Sort sort = (sortbydir.equalsIgnoreCase(Sort.Direction.ASC.name()))?Sort.by(sortby).ascending():Sort.by(sortby).descending();
+        Pageable pagable = PageRequest.of(pageno, pagesize, sort);
+        Page<Post> pageposts = postrepo.findAll(pagable);
+        List<Post> posts = pageposts.getContent();
+        List<postDTO> dtos =  posts.stream().map(post->maptToDTO(post)).collect(Collectors.toList());
+        return dtos;
+    }
+
+
+
+
+    postDTO maptToDTO(Post post){
+        postDTO dto = new postDTO();
+        dto.setId(post.getId());
+        dto.setTitle(post.getTitle());
+        dto.setDescription(post.getDescription());
+        dto.setContent(post.getContent());
+        return dto;
+    }
+    Post maptToEntity(postDTO postdto){
+        Post post = new Post();
+        post.setTitle(postdto.getTitle());
+        post.setDescription(postdto.getDescription());
+        post.setContent(postdto.getContent());
+        return post;
+    }
+
 }
