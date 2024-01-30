@@ -1,7 +1,9 @@
 package com.mblog.mblog;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class MblogApplication {
@@ -9,5 +11,8 @@ public class MblogApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(MblogApplication.class, args);
 	}
-
+	@Bean
+	public ModelMapper getModelMapper(){
+		return new ModelMapper();
+	}
 }
