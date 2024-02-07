@@ -54,6 +54,23 @@ public class postServiceImpl implements postService
         List<postDTO> dtos =  posts.stream().map(post->maptToDTO(post)).collect(Collectors.toList());
         return dtos;
     }
+
+    @Override
+    public void deletePostServ(long id) {
+        postrepo.findById(id).orElseThrow(()-> new ResourceNotFoundException("Post not found with Id: "+id));
+        postrepo.deleteById(id);
+    }
+
+    @Override
+    public postDTO UpdatePostServ(long id, postDTO update) {
+        Post Oldpost = postrepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post Not Found With Id" + id));
+        Post UpdatedPost = modelmapper.map(update, Post.class);
+        UpdatedPost.setId(Oldpost.getId());
+        Post NewPost = postrepo.save(UpdatedPost);
+        postDTO NewDTO = modelmapper.map(NewPost,postDTO.class);
+        return NewDTO;
+    }
+
     postDTO maptToDTO(Post post){
        postDTO dto = modelmapper.map(post,postDTO.class);
         return dto;

@@ -10,4 +10,8 @@ public interface postService {
     postDTO getPostById(long id);
 
     List<postDTO> getAllPost(int pageno, int pagesize, String sortby, String sortbydir);
+
+    void deletePostServ(long id);
+
+    postDTO UpdatePostServ(long id, postDTO update);
 }

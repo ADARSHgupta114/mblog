@@ -30,15 +30,10 @@ public class commentServImpl implements commentService {
     @Override
     public CommentDTO createCommentServ(CommentDTO commentdto, long postId){
         Post post=postrepository.findById(postId).orElseThrow(()-> new ResourceNotFoundException("Post Not Found with id:"+postId));
-        Comments comment = new Comments();
-        comment.setEmail(commentdto.getEmail());
-        comment.setText(commentdto.getText());
+        Comments comment = modelmapper.map(commentdto, Comments.class);
         comment.setPost(post);
         Comments savedComment = commentrepository.save(comment);
-        CommentDTO dto = new CommentDTO();
-        dto.setText(savedComment.getText());
-        dto.setId(savedComment.getId());
-        dto.setEmail(savedComment.getEmail());
+        CommentDTO dto = modelmapper.map(savedComment, CommentDTO.class);
         return dto;
     }
 
