@@ -6,6 +6,10 @@ import com.mblog.mblog.payload.Role;
 import com.mblog.mblog.payload.SingupDTO;
 import com.mblog.mblog.repository.roleRepository;
 import com.mblog.mblog.repository.userRepository;
+import com.mblog.mblog.service.EmailService;
+import com.mblog.mblog.service.EmailVerificationService;
+import com.mblog.mblog.service.impl.userServiceImpl;
+import com.mblog.mblog.service.userService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +19,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -34,16 +37,25 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private roleRepository rolerepository;
-    @Autowired
-    private userRepository userrepository;
 
+    private userService userservice;
+
+    public AuthController(userService userservice) {
+        this.userservice = userservice;
+    }
+
+    @Autowired
+    private EmailService emailserive;
+
+    @Autowired
+    private EmailVerificationService emailVerificationService;
 
 
     @PostMapping("/sign-up")
     public ResponseEntity<?> registerUser(@RequestBody SingupDTO signDTO){
-        if(userrepository.existsByUsername(signDTO.getUsername()))
+        if(userservice.existsByUsername(signDTO.getUsername()))
             return new ResponseEntity<>("UserName is Already Taken", HttpStatus.BAD_REQUEST);
-        if(userrepository.existsByEmail(signDTO.getEmail()))
+        if(userservice.existsByEmail(signDTO.getEmail()))
             return  new ResponseEntity<>("Email id is Already Registered",HttpStatus.BAD_REQUEST);
         User user = new User();
         user.setEmail(signDTO.getEmail());
@@ -54,8 +66,19 @@ public class AuthController {
         Set<Role> roleSet =new HashSet<>();
         roleSet.add(roles);
         user.setRoles(roleSet);
-        userrepository.save(user);
-        return new ResponseEntity<>("User Registered Successfully",HttpStatus.OK);
+        emailserive.sendotpEmail(signDTO.getEmail());
+        userservice.saveUser(user);
+        Map<String,String> response = new HashMap<>();
+        response.put("Status: ","Success");
+        response.put("Message:","User Registered Successfully check your Email");
+
+        return new ResponseEntity<>(response,HttpStatus.OK);
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> emailVerify(@RequestParam String email,@RequestParam String otp){
+       Map<String,String> verified = emailVerificationService.verifyOTP(email,otp);
+        return new ResponseEntity<>(verified,HttpStatus.OK);
     }
     @PostMapping("/sign-in")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDTO logindto){
