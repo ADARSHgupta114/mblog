@@ -20,4 +20,6 @@ public interface userService
     boolean existsByEmail(String email);
 
     Optional<User> findByUsernameOrEmail(String username, String username1);
+
+    void forgotpasswordchange(User user,String password);
 }

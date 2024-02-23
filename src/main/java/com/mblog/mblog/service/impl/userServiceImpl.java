@@ -3,6 +3,8 @@ package com.mblog.mblog.service.impl;
 import com.mblog.mblog.entites.User;
 import com.mblog.mblog.repository.userRepository;
 import com.mblog.mblog.service.userService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -10,6 +12,8 @@ import java.util.Optional;
 
 @Service
 public class userServiceImpl implements userService {
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private userRepository userrepository;
 
@@ -37,7 +41,8 @@ public class userServiceImpl implements userService {
 
     @Override
     public boolean isEmailVerified(String email) {
-        return false;
+        User user = userrepository.findByEmail(email).get();
+        return user!=null && user.getVerifiedEmail();
     }
 
     @Override
@@ -56,5 +61,11 @@ public class userServiceImpl implements userService {
     @Override
     public Optional<User> findByUsernameOrEmail(String username, String email) {
         return userrepository.findByUsernameOrEmail(username,email);
+    }
+
+    @Override
+    public void forgotpasswordchange(User user,String password) {
+        user.setPassword(passwordEncoder.encode(password));
+        userrepository.save(user);
     }
 }

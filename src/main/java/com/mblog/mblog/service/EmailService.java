@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import com.mblog.mblog.repository.userRepository;
 import static  com.mblog.mblog.service.EmailVerificationService.emailotpMapping;
+import static  com.mblog.mblog.service.forgotPasswordService.forgotpassotpMapping;
 @Service
 public class EmailService {
 
@@ -22,6 +23,13 @@ public class EmailService {
     public String generateOTP(){
         return String.format("%06d",new java.util.Random().nextInt(1000000));
     }
+
+
+    public void sendotpEmailForget(String email){
+        String otp = generateOTP();
+        forgotpassotpMapping.put(email,otp);
+        sendEmail(email,"Otp for Email Verification","Your OTP "+otp);
+    }
     public void sendotpEmail(String email){
         String otp = generateOTP();
         emailotpMapping.put(email,otp);
@@ -37,4 +45,10 @@ public class EmailService {
         javamailsender.send(message);
     }
 
+    //OTP LINKING FOR EMAIL VERIFICATION
+    public void sendotplinkEmail(String email,String URL) {
+        String otp = generateOTP();
+        emailotpMapping.put(email,otp);
+        sendEmail(email,"Link for Email Verification","http://localhost:8080/api/auth/verify-email?email="+email+"&otp="+otp);
+    }
 }
