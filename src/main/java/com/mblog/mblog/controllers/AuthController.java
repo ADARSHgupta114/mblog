@@ -8,6 +8,7 @@ import com.mblog.mblog.repository.roleRepository;
 import com.mblog.mblog.repository.userRepository;
 import com.mblog.mblog.service.EmailService;
 import com.mblog.mblog.service.EmailVerificationService;
+import com.mblog.mblog.service.forgotPasswordService;
 import com.mblog.mblog.service.impl.userServiceImpl;
 import com.mblog.mblog.service.userService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +19,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @RestController
@@ -37,7 +36,8 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private roleRepository rolerepository;
-
+    @Autowired
+    private forgotPasswordService forgotpassword;
     private userService userservice;
 
     public AuthController(userService userservice) {
@@ -66,7 +66,9 @@ public class AuthController {
         Set<Role> roleSet =new HashSet<>();
         roleSet.add(roles);
         user.setRoles(roleSet);
-        emailserive.sendotpEmail(signDTO.getEmail());
+        //emailserive.sendotpEmail(signDTO.getEmail());
+        String URL = "http://localhost:8080/api/auth/verify-email";
+        emailserive.sendotplinkEmail(signDTO.getEmail(),URL);
         userservice.saveUser(user);
         Map<String,String> response = new HashMap<>();
         response.put("Status: ","Success");
@@ -75,10 +77,15 @@ public class AuthController {
         return new ResponseEntity<>(response,HttpStatus.OK);
     }
 
-    @PostMapping("/verify-email")
+/*    @PostMapping("/verify-email")
     public ResponseEntity<?> emailVerify(@RequestParam String email,@RequestParam String otp){
        Map<String,String> verified = emailVerificationService.verifyOTP(email,otp);
         return new ResponseEntity<>(verified,HttpStatus.OK);
+    }*/
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> emailVerify(@RequestParam String email,@RequestParam String otp) {
+        Map<String, String> verified = emailVerificationService.verifyOTP(email, otp);
+        return new ResponseEntity<>(verified, HttpStatus.OK);
     }
     @PostMapping("/sign-in")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDTO logindto){
@@ -86,5 +93,20 @@ public class AuthController {
         Authentication authenticate = authenticationmanager.authenticate(usernamePasswordAuthenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authenticate);
         return new ResponseEntity<>("User Signed in SuccessFully",HttpStatus.OK);
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> getPassword(@RequestParam String email){
+        User user = userservice.findByEmail(email).get();
+        if(userservice.isEmailVerified(email)){
+            emailserive.sendotpEmailForget(email);
+        }
+        else
+            return new ResponseEntity<>("Register the Email first",HttpStatus.OK);
+        return new ResponseEntity<>("Check Email to Reset the Password",HttpStatus.OK);
+    }
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email,@RequestParam String otp,@RequestParam String password){
+            Map<String,String> response = forgotpassword.verfiychangePassword(email,otp,password);
+        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 }
